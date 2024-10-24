@@ -1,5 +1,5 @@
 streamlit
 python-dotenv
 pinecone-client
-langchain
-openai
+langchain>=0.0.144
+openai>=0.27.0
