@@ -1,7 +1,7 @@
 import streamlit as st
 import os
 import pinecone
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.embeddings import OpenAIEmbeddings  # または from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Pinecone as LangChainPinecone
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import ConversationalRetrievalChain
