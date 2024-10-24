@@ -1,7 +1,7 @@
 streamlit
 python-dotenv
 pinecone-client
-langchain>=0.0.260
+langchain==0.0.232
 openai
 tiktoken
 numpy
