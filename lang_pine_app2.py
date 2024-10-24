@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 import pinecone
+from pinecone import Pinecone, ServerlessSpec
 from dotenv import load_dotenv
 from langchain.embeddings import OpenAIEmbeddings  # インポート文を元に戻す
 from langchain.vectorstores import Pinecone as LangChainPinecone
@@ -29,13 +30,18 @@ index_name = st.secrets["PINECONE_INDEX_NAME"]
 # Pinecone の初期化
 if pinecone_api_key:
     try:
-        pinecone.init(api_key=pinecone_api_key, environment=pinecone_env)
+        # Pinecone のインスタンスを作成
+        pc = Pinecone(api_key=pinecone_api_key)
 
-        if index_name not in pinecone.list_indexes():
-            pinecone.create_index(
+        if index_name not in [index.name for index in pc.list_indexes()]:
+            pc.create_index(
                 name=index_name,
                 dimension=1536,
                 metric="cosine",
+                spec=ServerlessSpec(
+                    cloud='aws',
+                    region=pinecone_env
+                )
             )
             st.success(f"新しいインデックス '{index_name}' が作成されました。")
         else:
@@ -44,6 +50,7 @@ if pinecone_api_key:
         st.error(f"Pinecone 初期化エラー: {e}")
 else:
     st.error("Pinecone API Key が指定されていません。")
+
 
 # セッションステートの初期化
 if "history" not in st.session_state:
@@ -54,13 +61,14 @@ st.subheader("質問を入力してください：")
 user_input = st.text_input("質問", placeholder="例: 最近のAI技術のトレンドは？")
 
 if user_input and openai_api_key and pinecone_api_key:
-    # OpenAI Embeddingsの初期化
+    # OpenAI Embeddings の初期化
     embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
 
-    # Pineconeのインデックスを読み込む
-    vector_store = LangChainPinecone.from_existing_index(
-        index_name=index_name, embedding=embeddings
-    )
+    # Pinecone のインデックスを取得
+    index = pc.Index(index_name)
+
+    # LangChain の Pinecone を初期化
+    vector_store = LangChainPinecone(index, embeddings.embed_query)
 
     # OpenAI LLM の初期化
     llm = OpenAI(openai_api_key=openai_api_key, temperature=temperature)
