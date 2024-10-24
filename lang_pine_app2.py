@@ -2,7 +2,7 @@ import streamlit as st
 import os
 from dotenv import load_dotenv
 import pinecone  # ここを修正
-from langchain.embeddings import OpenAIEmbeddings
+from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Pinecone as LangChainPinecone
 from langchain.llms import OpenAI
 from langchain.chains import RetrievalQA
