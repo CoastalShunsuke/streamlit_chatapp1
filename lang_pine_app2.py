@@ -1,18 +1,34 @@
 import streamlit as st
 import os
+import pinecone
 from dotenv import load_dotenv
-import pinecone  # ここを修正
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.embeddings.openai import OpenAIEmbeddings  # インポート文を修正
 from langchain.vectorstores import Pinecone as LangChainPinecone
 from langchain.llms import OpenAI
 from langchain.chains import RetrievalQA
 
-# ...（省略）...
+# アプリのタイトルと説明
+st.set_page_config(page_title="Conversational RAG Chatbot", page_icon="💬")
+st.title("💬 Conversational RAG Chatbot")
+st.markdown("""
+このアプリは、会話履歴を考慮したRetrieval-Augmented Generation (RAG) チャットボットです。
+Pinecone のベクトルストアと OpenAI の GPT を組み合わせ、過去の履歴を踏まえて対話を行います。
+""")
+
+# サイドバーの設定
+st.sidebar.title("🛠 パラメータ調整")
+temperature = st.sidebar.slider("Temperature (生成の多様性)", 0.0, 1.0, 0.7, step=0.1)
+top_k = st.sidebar.slider("Top-k Documents (検索時の上位文書数)", 1, 10, 3)
+
+# 環境変数の読み込み
+openai_api_key = st.secrets["OPENAI_API_KEY"]
+pinecone_api_key = st.secrets["PINECONE_API_KEY"]
+pinecone_env = st.secrets["PINECONE_ENVIRONMENT"]
+index_name = st.secrets["PINECONE_INDEX_NAME"]
 
 # Pinecone の初期化
 if pinecone_api_key:
     try:
-        # Pineconeの初期化を追加
         pinecone.init(api_key=pinecone_api_key, environment=pinecone_env)
 
         if index_name not in pinecone.list_indexes():
@@ -41,7 +57,6 @@ if user_input and openai_api_key and pinecone_api_key:
     # OpenAI Embeddingsの初期化
     embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
 
-    # **Pineconeのインデックスを読み込む前に初期化が必要**
     # Pineconeのインデックスを読み込む
     vector_store = LangChainPinecone.from_existing_index(
         index_name=index_name, embedding=embeddings
@@ -68,7 +83,7 @@ if user_input and openai_api_key and pinecone_api_key:
     )
 
     # 質問に対する回答と参照された文書を取得
-    result = qa_chain({"query": prompt})
+    result = qa_chain({"query": user_input})
 
     response = result['result']
     source_documents = result['source_documents']
